@@ -19,6 +19,7 @@
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
+    
     [self.window makeKeyAndVisible];
     return YES;
 }
@@ -29,15 +30,54 @@
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
 }
 
+- (void) timerMethod:(NSTimer *)paramSender{
+
+
+    NSURL *url = [NSURL URLWithString:@"http://passionbean.files.wordpress.com/2012/02/screen-shot-2012-02-15-at-e4b88be58d882-51-30.png"];
+    
+    NSURLRequest *req = [NSURLRequest requestWithURL:url];
+    [NSURLConnection sendAsynchronousRequest:req queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *res, NSData *data, NSError *error) {
+        NSLog(@"error %@", error);
+    }];
+    
+}
+
+- (void) endBackgroundTask{
+    dispatch_queue_t mainQueue = dispatch_get_main_queue();
+    dispatch_async(mainQueue, ^(void) {
+            [self.myTimer invalidate];
+            [[UIApplication sharedApplication]
+                    endBackgroundTask:self.backgroundTaskIdentifier];
+            self .backgroundTaskIdentifier = UIBackgroundTaskInvalid;
+    });
+    
+}
+
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
-    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
+    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+    
+    
+    
+    self.backgroundTaskIdentifier =
+    [application beginBackgroundTaskWithExpirationHandler:^(void) {
+        [self endBackgroundTask]; }];
+
+    
+    self.myTimer =
+    [NSTimer scheduledTimerWithTimeInterval:1.0f
+                                     target:self selector:@selector(timerMethod:) userInfo:nil
+                                    repeats:YES];
+
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+    if (self.backgroundTaskIdentifier != UIBackgroundTaskInvalid){
+        [self endBackgroundTask];
+    }
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
